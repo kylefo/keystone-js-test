@@ -74,7 +74,7 @@ describe('Auth Test', () => {
   });
 
   test('sign up with bad data', async () => {
-    const bob = {
+    const boba = {
       name: '', // required but empty
       email: 'bob@example.com',
       password: 'bob' // min length is 8 but 3
@@ -103,7 +103,7 @@ describe('Auth Test', () => {
   });
 
   test('sign in with bad data', async () => {
-    const bob = {
+    const boba = {
       email: 'bob@example.com',
       password: 'bob'
     };
