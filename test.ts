@@ -94,7 +94,7 @@ describe('Auth Test', () => {
   // sign in
   test('sign in with good data', async () => {
     const { data, errors } = await context.graphql.raw({
-      query: `mutation {\n  authenticate: authenticateUserWithPassword(email: "${alice.email}", password: "${alice.password}") {\n    ... on UserAuthenticationWithPasswordSuccess {\n      item {\n        id\n        name\n        email\n        __typename\n      }\n      __typename\n    }\n    ... on UserAuthenticationWithPasswordFailure {\n      message\n      __typename\n    }\n    __typename\n  }\n}`,
+      query: `mutation { authenticate: authenticateUserWithPassword(email: "${alice.email}", password: "${alice.password}") { ... on UserAuthenticationWithPasswordSuccess { item { id name email } } ... on UserAuthenticationWithPasswordFailure { message } }}`,
     }) as any;
 
     expect(data!.authenticate.message).toBe(undefined);
@@ -109,7 +109,7 @@ describe('Auth Test', () => {
     };
 
     const { data, errors } = await context.graphql.raw({
-      query: `mutation {\n  authenticate: authenticateUserWithPassword(email: "${bob.email}", password: "${bob.password}") {\n    ... on UserAuthenticationWithPasswordSuccess {\n      item {\n        id\n        __typename\n      }\n      __typename\n    }\n    ... on UserAuthenticationWithPasswordFailure {\n      message\n      __typename\n    }\n    __typename\n  }\n}`,
+      query: `mutation { authenticate: authenticateUserWithPassword(email: "${bob.email}", password: "${bob.password}") { ... on UserAuthenticationWithPasswordSuccess { item { id name email } } ... on UserAuthenticationWithPasswordFailure { message } }}`,
     }) as any;
 
     expect(data!.authenticate.message).toEqual('Authentication failed.');
