@@ -76,8 +76,8 @@ describe('Auth Test', () => {
   test('sign up with bad data', async () => {
     const boba = {
       name: '', // required but empty
-      email: 'bob@example.com',
-      password: 'bob' // min length is 8 but 3
+      email: 'boba@example.com',
+      password: 'boba' // min length is 8 but 4
     };
 
     const { data, errors } = await context.graphql.raw({
