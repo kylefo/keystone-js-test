@@ -81,7 +81,7 @@ describe('Auth Test', () => {
     };
 
     const { data, errors } = await context.graphql.raw({
-      query: `mutation {  user: createUser(data: { name: "${bob.name}", email: "${bob.email}", password: "${bob.password}" }) { id name email password { isSet } }}`,
+      query: `mutation {  user: createUser(data: { name: "${boba.name}", email: "${boba.email}", password: "${boba.password}" }) { id name email password { isSet } }}`,
     }) as any;
 
     expect(data!.user).toBe(null);
@@ -109,7 +109,7 @@ describe('Auth Test', () => {
     };
 
     const { data, errors } = await context.graphql.raw({
-      query: `mutation { authenticate: authenticateUserWithPassword(email: "${bob.email}", password: "${bob.password}") { ... on UserAuthenticationWithPasswordSuccess { item { id name email } } ... on UserAuthenticationWithPasswordFailure { message } }}`,
+      query: `mutation { authenticate: authenticateUserWithPassword(email: "${boba.email}", password: "${boba.password}") { ... on UserAuthenticationWithPasswordSuccess { item { id name email } } ... on UserAuthenticationWithPasswordFailure { message } }}`,
     }) as any;
 
     expect(data!.authenticate.message).toEqual('Authentication failed.');
