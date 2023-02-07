@@ -14,20 +14,104 @@ beforeEach(async () => {
 
 const context = getContext(config, PrismaModule);
 
-test('Create User Test', async () => {
-  // Create user without the required `name` field
-  const { data, errors } = await context.graphql.raw({
-    query: `mutation {
-      createUser(data: { email: "alice@example.com", password: "super-secret" }) {
-        id name email password { isSet }
-      }
-    }`,
-  }) as any;
+describe('Auth Test', () => {
+  const alice = {
+    name: 'alice',
+    email: 'alice@example.com',
+    password: 'alice-secret'
+  };
 
-  expect(data!.createUser).toBe(null);
-  expect(errors).toHaveLength(1);
-  expect(errors![0].path).toEqual(['createUser']);
-  expect(errors![0].message).toEqual(
-    'You provided invalid data for this operation.\n  - User.name: Name must not be empty'
-  );
+  const bob = {
+    name: 'bob',
+    email: 'bob@example.com',
+    password: 'bob-secret'
+  }
+
+  beforeEach(async () => {
+    const { errors } = await context.graphql.raw({
+      query: `mutation { createUsers(data: [{
+        name: "${alice.name}",
+        email: "${alice.email}",
+        password: "${alice.password}",
+      }, {
+        name: "${bob.name}",
+        email: "${bob.email}",
+        password: "${bob.password}",
+      }]) { id }}`,
+    });
+
+    expect(errors).toBe(undefined);
+  });
+
+  // sign up
+  test('sign up with good data', async () => {
+    const aliceb = {
+      name: 'aliceb',
+      email: 'aliceb@example.com',
+      password: 'aliceb-secret'
+    };
+
+    const { data, errors } = await context.graphql.raw({
+      query: `mutation { user: createUser(data: { name: "${aliceb.name}", email: "${aliceb.email}", password: "${aliceb.password}" }) { id name email password { isSet } }}`,
+    }) as any;
+
+    expect(errors).toBe(undefined);
+    expect(data!.user.name).toEqual(aliceb.name);
+    expect(data!.user.email).toEqual(aliceb.email);
+    expect(data!.user.password.isSet).toEqual(true);
+  });
+
+  test('sign up with existing data', async () => {
+    const { data, errors } = await context.graphql.raw({
+      query: `mutation { user: createUser(data: { name: "${alice.name}", email: "${alice.email}", password: "${alice.password}" }) { id name email password { isSet } }}`,
+    }) as any;
+
+    expect(data!.user).toBe(null);
+    expect(errors).toHaveLength(1);
+    expect(errors![0].message).toEqual(
+      'Prisma error: Unique constraint failed on the fields: (`email`)'
+    );
+  });
+
+  test('sign up with bad data', async () => {
+    const bob = {
+      name: '', // required but empty
+      email: 'bob@example.com',
+      password: 'bob' // min length is 8 but 3
+    };
+
+    const { data, errors } = await context.graphql.raw({
+      query: `mutation {  user: createUser(data: { name: "${bob.name}", email: "${bob.email}", password: "${bob.password}" }) { id name email password { isSet } }}`,
+    }) as any;
+
+    expect(data!.user).toBe(null);
+    expect(errors).toHaveLength(1);
+    expect(errors![0].message).toEqual(
+      'You provided invalid data for this operation.\n  - User.name: Name must not be empty\n  - User.password: Password must be at least 8 characters long'
+    );
+  });
+
+  // sign in
+  test('sign in with good data', async () => {
+    const { data, errors } = await context.graphql.raw({
+      query: `mutation {\n  authenticate: authenticateUserWithPassword(email: "${alice.email}", password: "${alice.password}") {\n    ... on UserAuthenticationWithPasswordSuccess {\n      item {\n        id\n        name\n        email\n        __typename\n      }\n      __typename\n    }\n    ... on UserAuthenticationWithPasswordFailure {\n      message\n      __typename\n    }\n    __typename\n  }\n}`,
+    }) as any;
+
+    expect(data!.authenticate.message).toBe(undefined);
+    expect(data!.authenticate.item.name).toEqual(alice.name);
+    expect(data!.authenticate.item.email).toEqual(alice.email);
+  });
+
+  test('sign in with bad data', async () => {
+    const bob = {
+      email: 'bob@example.com',
+      password: 'bob'
+    };
+
+    const { data, errors } = await context.graphql.raw({
+      query: `mutation {\n  authenticate: authenticateUserWithPassword(email: "${bob.email}", password: "${bob.password}") {\n    ... on UserAuthenticationWithPasswordSuccess {\n      item {\n        id\n        __typename\n      }\n      __typename\n    }\n    ... on UserAuthenticationWithPasswordFailure {\n      message\n      __typename\n    }\n    __typename\n  }\n}`,
+    }) as any;
+
+    expect(data!.authenticate.message).toEqual('Authentication failed.');
+  });
 });
